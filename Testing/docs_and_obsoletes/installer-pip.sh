@@ -3,7 +3,7 @@
 #BUILDVER="211215T"
 BUILDVER="211115T"
 
-REPOSITORY_URL="https://raw.githubusercontent.com/venice1200/MiSTer_tty2oled/main"
+REPOSITORY_URL="https://raw.githubusercontent.com/Arrghus8/MiSTer_tty2oled/main"
 wget -q ${REPOSITORY_URL}/tty2oled.ini -O /tmp/tty2oled.ini
 . /tmp/tty2oled.ini
 

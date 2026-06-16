@@ -1,8 +1,8 @@
 #!/bin/bash
 
-REPOSITORY_URL="https://raw.githubusercontent.com/venice1200/MiSTer_tty2oled/main"
-REPOSITORY_URL2="https://www.tty2tft.de//MiSTer_tty2oled-installer"
-[ -e /media/fat/tty2oled/TTY2OLED_TESTING ] && REPOSITORY_URL="https://raw.githubusercontent.com/venice1200/MiSTer_tty2oled/main/Testing"
+REPOSITORY_URL="https://raw.githubusercontent.com/Arrghus8/MiSTer_tty2oled/main"
+REPOSITORY_URL2="https://raw.githubusercontent.com/Arrghus8/MiSTer_tty2oled/main/flashing"
+[ -e /media/fat/tty2oled/TTY2OLED_TESTING ] && REPOSITORY_URL="https://raw.githubusercontent.com/Arrghus8/MiSTer_tty2oled/main/Testing"
 DBAUD="921600"
 DSTD="--before default_reset --after hard_reset write_flash --compress --flash_mode dio --flash_freq 80m --flash_size detect"
 TMPDIR=$(mktemp -d)
@@ -13,19 +13,19 @@ flash() {
     echo "------------------------------------------------------------------------"
     case "${MCUtype}" in
 	HWESP32DE)
-	    wget -q ${REPOSITORY_URL2}/MAC.html?${MAC} ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/esp32de_${BUILDVER}.bin
+	    wget -q ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/esp32de_${BUILDVER}.bin
 	    ${TMPDIR}/esptool.py --chip esp32 --port ${TTYDEV} --baud ${DBAUD} ${DSTD} 0xe000 ${TMPDIR}/boot_app0.bin 0x1000 ${TMPDIR}/bootloader_esp32_dio_80m.bin 0x10000 ${TMPDIR}/esp32de_${BUILDVER}.bin 0x8000 ${TMPDIR}/partitions.bin
 	    ;;
 	HWLOLIN32)
-	    wget -q ${REPOSITORY_URL2}/MAC.html?${MAC} ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/lolin32_${BUILDVER}.bin
+	    wget -q ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/lolin32_${BUILDVER}.bin
 	    ${TMPDIR}/esptool.py --chip esp32 --port ${TTYDEV} --baud ${DBAUD} ${DSTD} 0xe000 ${TMPDIR}/boot_app0.bin 0x1000 ${TMPDIR}/bootloader_esp32_dio_80m.bin 0x10000 ${TMPDIR}/lolin32_${BUILDVER}.bin 0x8000 ${TMPDIR}/partitions.bin
 	    ;;
 	HWESP32S3)
-	    wget -q ${REPOSITORY_URL2}/MAC.html?${MAC} ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32s3_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/esp32s3_${BUILDVER}.bin
+	    wget -q ${REPOSITORY_URL2}/boot_app0.bin ${REPOSITORY_URL2}/bootloader_esp32s3_dio_80m.bin ${REPOSITORY_URL2}/partitions.bin ${REPOSITORY_URL2}/esp32s3_${BUILDVER}.bin
 	    ${TMPDIR}/esptool.py --chip esp32s3 --port ${TTYDEV} --baud ${DBAUD} ${DSTD} 0xe000 ${TMPDIR}/boot_app0.bin 0x0 ${TMPDIR}/bootloader_esp32s3_dio_80m.bin 0x10000 ${TMPDIR}/esp32s3_${BUILDVER}.bin 0x8000 ${TMPDIR}/partitions.bin
 	    ;;
 	HWESP8266)
-	    wget -q ${REPOSITORY_URL2}/MAC.html?${MAC} ${REPOSITORY_URL2}/esp8266_${BUILDVER}.bin
+	    wget -q ${REPOSITORY_URL2}/esp8266_${BUILDVER}.bin
 	    ${TMPDIR}/esptool.py --chip esp8266 --port ${TTYDEV} --baud ${DBAUD} ${DSTD} 0x00000 ${TMPDIR}/esp8266_${BUILDVER}.bin
 	    ;;
     esac

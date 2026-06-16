@@ -40,7 +40,8 @@
 */
 
 // Set Version
-#define BuildVersion "230702"                    // "T" for Testing
+#define BuildVersion "260616"                    // "T" for Testing
+//#define USE_TTY2OLED_STARTUP
 
 // Include Libraries
 #include <Arduino.h>
@@ -217,7 +218,7 @@ Bounce RotationDebouncer = Bounce();     // Create Bounce class
 String newCommand = "";                // Received Text, from MiSTer without "\n" currently (2021-01-11)
 String prevCommand = "";
 String actCorename = "No Core loaded"; // Actual Received Corename
-uint8_t contrast = 5;                  // Contrast (brightness) of display, range: 0 (no contrast) to 255 (maximum)
+uint8_t contrast = 100;                // Contrast (brightness) of display, range: 0 (no contrast) to 255 (maximum)
 int tEffect = 0;                       // Run this Effect
 //char *newCommandChar;
 
@@ -380,6 +381,7 @@ void setup(void) {
 
   if (bversion.endsWith("T")) runsTesting=true;     // Running Testing Yes/No?
 
+  Serial.setRxBufferSize(1024);              // Increase buffer size
   Serial.begin(115200);                      // Init Serial with 115200 for MiSTer ttyUSBx Device CP2102 Chip on ESP32
   Serial.flush();                            // Wait for empty Send Buffer
   Serial.setTimeout(500);                    // Set max. Serial "Waiting Time", default = 1000ms
@@ -914,65 +916,127 @@ void loop(void) {
 void oled_showStartScreen(void) {
   uint8_t color = 0;
 
-#ifdef XDEBUG
-  Serial.println("Show Startscreen");
-#endif
+  #ifdef XDEBUG
+    Serial.println("Show Startscreen");
+  #endif
   oled.clearDisplay();
-  oled.drawXBitmap(82, 0, tty2oled_logo, tty2oled_logo_width, tty2oled_logo_height, SSD1322_WHITE);
-  oled.display();
-  delay(1000);
-  for (int i=0; i<DispWidth; i+=16) {            // Some Animation
-    oled.fillRect(i,55,16,8,color);
-    color++;
+  
+  #ifdef USE_TTY2OLED_STARTUP
+    oled.drawXBitmap(82, 0, tty2oled_logo, tty2oled_logo_width, tty2oled_logo_height, SSD1322_WHITE);
     oled.display();
-#ifdef USE_ESP32XDEV
-    if (dtiv>=12) {                              // Let the RGB LED light up
-      wsleds[0] = CHSV(i,255,255);
-      FastLED.show();
+    delay(1000);
+    for (int i=0; i<DispWidth; i+=16) {            // Some Animation
+      oled.fillRect(i,55,16,8,color);
+      color++;
+      oled.display();
+    #ifdef USE_ESP32XDEV
+        if (dtiv>=12) {                              // Let the RGB LED light up
+          wsleds[0] = CHSV(i,255,255);
+          FastLED.show();
+        }
+    #endif
+      delay(20);
     }
-#endif
-    delay(20);
-  }
-  for (int i=0; i<DispWidth; i+=16) {            // Remove Animation Line
-    oled.fillRect(i,55,16,8,SSD1322_BLACK);
+    for (int i=0; i<DispWidth; i+=16) {            // Remove Animation Line
+      oled.fillRect(i,55,16,8,SSD1322_BLACK);
+      oled.display();
+    #ifdef USE_ESP32XDEV
+        if (dtiv>=12) {                              // Let the RGB LED light up
+          wsleds[0] = CHSV(255-i,255,255);
+          FastLED.show();
+        }
+    #endif
+      delay(20);
+    }
+    #ifdef USE_ESP32XDEV
+      if (dtiv>=12) {
+        digitalWrite(POWER_LED,1);                   // Power off Power LED's D2 & D3
+        wsleds[0] = CRGB::Black;                     // RGB LED off
+        FastLED.show();
+      }
+    #endif
+    delay(500);
+    u8g2.setFont(u8g2_font_5x7_mf);               // 6 Pixel Font
+    u8g2.setCursor(0,63);
+    u8g2.print(BuildVersion);
+    if (runsTesting) {
+      if (hasMIC) u8g2.print("M");
+      if (hasPCA) u8g2.print("P");
+      if (dtiv>10) u8g2.print(dtiv);
+      if (usePREFS) u8g2.print("E");
+      oled.drawXBitmap(DispWidth-usb_icon_width, DispHeight-usb_icon_height, usb_icon, usb_icon_width, usb_icon_height, SSD1322_WHITE);
+    }
+
+    #ifdef USE_ESP32XDEV
+      if (hasMIC) {
+        u8g2.setCursor(111,63);
+        u8g2.print(tSensor.getTemp());    // Show Temperature if Sensor available
+        u8g2.print("\xb0");
+        u8g2.print("C");
+      }
+    #endif
+
     oled.display();
-#ifdef USE_ESP32XDEV
-    if (dtiv>=12) {                              // Let the RGB LED light up
-      wsleds[0] = CHSV(255-i,255,255);
-      FastLED.show();
+  #else
+    oled.draw4bppBitmap(MiSTer_startup_pic);
+    oled.display();
+    delay(1000);
+
+    for (int i=0; i<16; i+=1) {    // Draw initial top bar left-to-right
+      color = 15 - i;
+      for (int j=0; j<=i; j+=1) {
+        oled.fillRect(16*j, 0, 16, 8, color);
+        color++;
+      }
+      oled.display();
+      delay(20);
     }
-#endif
-    delay(20);
-  }
-#ifdef USE_ESP32XDEV
-  if (dtiv>=12) {
-    digitalWrite(POWER_LED,1);                   // Power off Power LED's D2 & D3
-    wsleds[0] = CRGB::Black;                     // RGB LED off
-    FastLED.show();
-  }
-#endif
-  delay(500);
-  u8g2.setFont(u8g2_font_5x7_mf);               // 6 Pixel Font
-  u8g2.setCursor(0,63);
-  u8g2.print(BuildVersion);
-  if (runsTesting) {
-    if (hasMIC) u8g2.print("M");
-    if (hasPCA) u8g2.print("P");
-    if (dtiv>10) u8g2.print(dtiv);
-    if (usePREFS) u8g2.print("E");
-    oled.drawXBitmap(DispWidth-usb_icon_width, DispHeight-usb_icon_height, usb_icon, usb_icon_width, usb_icon_height, SSD1322_WHITE);
-  }
 
-#ifdef USE_ESP32XDEV
-  if (hasMIC) {
-    u8g2.setCursor(111,63);
-    u8g2.print(tSensor.getTemp());    // Show Temperature if Sensor available
-    u8g2.print("\xb0");
-    u8g2.print("C");
-  }
-#endif
-
-  oled.display();
+    while (!Serial.available()) {
+      // Draw bottom bar right-to-left as top bar disappears
+      for (int i=0; i<16; i+=1) {
+        color = 15-i;
+        for (int j=0; j<=i; j+=1) {
+          oled.fillRect(DispWidth-16*(j+1), 56, 16, 8, color); // Draw bottom bar
+          oled.fillRect(16*j, 0, 16, 8, SSD1322_BLACK);        // Erase top bar
+          color++;
+        }
+        color = 1;
+        for (int j=i+1; j<16; j+=1) { // Update visible portion of top bar
+          oled.fillRect(16*j, 0, 16, 8, color);
+          color++;
+        }
+        oled.display();
+        delay(20);
+      }
+      // Draw top bar left-to-right as bottom bar disappears
+      for (int i=0; i<16; i+=1) {
+        color = 15-i;
+        for (int j=0; j<=i; j+=1) {
+          oled.fillRect(16*j,                0, 16, 8, color);          // Draw top bar
+          oled.fillRect(DispWidth-16*(j+1), 56, 16, 8, SSD1322_BLACK);  // Erase bottom bar
+          color++;
+        }
+        color = 1;
+        for (int j=i+1; j<16; j+=1) { // Update visible portion of bottom bar
+          oled.fillRect(DispWidth-16*(j+1), 56, 16, 8, color);
+          color++;
+        }
+        oled.display();
+        delay(20);
+      }
+    }
+    // Draw final bars right-to-left in white
+    color = 15;
+    for (int i=0; i<16; i+=1) {
+      for (int j=0; j<=i; j+=1) {
+        oled.fillRect(DispWidth-16*(j+1),  0, 16, 8, color);
+        oled.fillRect(DispWidth-16*(j+1), 56, 16, 8, color);
+      }
+      oled.display();
+      delay(20);
+    }
+  #endif
   startScreenActive=true;
 } // end mistertext
 

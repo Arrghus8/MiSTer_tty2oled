@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPOSITORY_URL2="https://www.tty2tft.de//MiSTer_tty2oled-installer"
+REPOSITORY_URL2="https://raw.githubusercontent.com/Arrghus8/MiSTer_tty2oled/main/flashing"
 TTYDEV="/dev/ttyUSB0"
 DBAUD="921600"
 DSTD="--before default_reset --after hard_reset write_flash --compress --flash_mode dio --flash_freq 80m --flash_size detect"
